@@ -6,7 +6,7 @@ class WikiArgumentParser:
     """
 
     def __init__(self):
-        # Allowing help descriptions to be formatted widely (f.e.\n)
+        # Allowing help descriptions to be formatted prettier
         self.parser = argparse.ArgumentParser(
             description="Terraria Wiki Scraper",
             formatter_class=argparse.RawTextHelpFormatter
@@ -18,9 +18,14 @@ class WikiArgumentParser:
         Defines all possible CLI arguments.
         Use a mutually exclusive group for the main commands to ensure
         the user runs only one primary operation at a time.
+        add.argument() flags:
+            metavar='PHRASE': makes the instructions cleaner: usage: --summary PHRASE instead of usage: --summary SUMMARY
+            type=int: converts command-line args into specific types
+            action: turns the argument into an on/off flag
+            choices: limits user input to selected choices
         """
-        # Primary Action Group (User must select exactly one)
-        # 
+        # Primary Argument Group (User must select exactly one)
+        
         action_group = self.parser.add_mutually_exclusive_group(required=True)
 
         action_group.add_argument(
@@ -102,10 +107,6 @@ class WikiArgumentParser:
             type=float,
             help='Wait time (seconds) between requests to avoid bans.'
         )
-
-    """
-    Returns argparse namespace
-    """
 
     def parse_args(self):
         """

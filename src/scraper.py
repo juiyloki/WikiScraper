@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from bs4 import BeautifulSoup
 
@@ -94,3 +95,90 @@ class WikiScraper:
         
         print("[!] No valid summary paragraph found.")
         return None
+    
+    def get_table(self, phrase, table_number):
+        """
+        Finds the n-th table in the article HTML.
+        Returns the raw HTML string of that table to be processed by pandas.
+        
+        :param phrase: Search phrase
+        :param table_number: 1-based index of the table to find (e.g. 1, 2, 3)
+        """
+        soup = self._get_soup(phrase)
+        if not soup:
+            return None
+
+        # Find all <table> elements
+        # Note: We look for standard HTML tables.
+        # Some wikis use 'wikitable' class, but finding 'table' tag is most robust.
+        tables = soup.find_all('table')
+
+        if not tables:
+            print(f"[!] No tables found on the page for '{phrase}'.")
+            return None
+
+        # Handle 1-based indexing (User says 1, Python needs 0)
+        index = table_number - 1
+
+        if index < 0 or index >= len(tables):
+            print(f"[!] Table number {table_number} not found. (Found {len(tables)} tables).")
+            return None
+
+        # Return the string representation of the specific table
+        return str(tables[index])
+    
+    def get_text(self, phrase):
+        """
+        Retrieves the full text of the article, excluding site navigation/menus.
+       
+        """
+        soup = self._get_soup(phrase)
+        if not soup:
+            return None
+
+        # Locate the main content area
+        # On wiki.gg and MediaWiki, this is usually 'mw-parser-output'
+        content_div = soup.find('div', class_='mw-parser-output')
+        
+        if not content_div:
+             # Fallback
+            content_div = soup.find('div', id='mw-content-text')
+
+        if not content_div:
+            print("[!] Could not locate article content.")
+            return None
+
+        # Extract text using Beautiful Soup's get_text
+        # separator=' ' ensures words don't merge when tags are removed (e.g. "end.Start")
+        return content_div.get_text(separator=' ', strip=True)
+    
+    def get_internal_links(self, phrase):
+        """
+        Finds valid internal links in the article to allow for recursive scraping.
+        Returns a list of phrase strings (e.g., ['Eye_of_Cthulhu', 'King_Slime']).
+        """
+        soup = self._get_soup(phrase)
+        if not soup:
+            return []
+
+        links = []
+        content_div = soup.find('div', class_='mw-parser-output')
+        
+        if not content_div:
+            content_div = soup.find('div', id='mw-content-text')
+
+        if not content_div:
+            return []
+
+        # Find all anchor tags with an href attribute
+        for a_tag in content_div.find_all('a', href=True):
+            href = a_tag['href']
+
+            # [cite: 78] Check for the /wiki/ prefix to ensure we stay on the site
+            # We also ignore special pages like 'File:', 'Special:', 'Talk:' to keep it relevant
+            if href.startswith('/wiki/') and ':' not in href:
+                # Extract the phrase part: "/wiki/Moon_Lord" -> "Moon_Lord"
+                clean_phrase = href.replace('/wiki/', '')
+                links.append(clean_phrase)
+        
+        return links
