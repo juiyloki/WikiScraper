@@ -10,8 +10,8 @@ Example: python wiki_scraper.py --summary "Moon Lord"
 """
 
 import sys
-from argument import WikiArgumentParser
-from manager import ScraperManager
+from src.argument import WikiArgumentParser
+from src.manager import ScraperManager
 
 def main():
     """

@@ -1,0 +1,96 @@
+import os
+import requests
+from bs4 import BeautifulSoup
+
+class WikiScraper:
+    """
+    Handles the retrieval and parsing of Wiki data.
+    Supports both live web scraping and local file reading for testing.
+    """
+
+    def __init__(self, base_url, use_local_file=False, local_file_path=None):
+        """
+        Initialize the scraper.
+
+        :param base_url: The root URL ("https://terraria.wiki.gg/wiki/").
+        :param use_local_file: If True, reads from disk instead of the web.
+        :param local_file_path: Path to the HTML file (required if use_local_file is True).
+        """
+        self.base_url = base_url
+        self.use_local_file = use_local_file
+        self.local_file_path = local_file_path
+
+    def _get_soup(self, phrase):
+        """
+        Internal helper. Fetches HTML content and returns a BeautifulSoup object.
+        Handles the logic switch between HTTP requests and local files.
+        """
+        html_content = ""
+
+        if self.use_local_file:
+            # Local Mode (For Testing/Safety)
+            if not self.local_file_path or not os.path.exists(self.local_file_path):
+                raise FileNotFoundError(f"Local file not found: {self.local_file_path}")
+            
+            with open(self.local_file_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+        
+        else:
+            # Web Mode
+            # Convert spaces to underscores (e.g. "Moon Lord" -> "Moon_Lord")
+            formatted_phrase = phrase.replace(" ", "_")
+            url = f"{self.base_url}{formatted_phrase}"
+            
+            try:
+                response = requests.get(url)
+                
+                # Handle cases where article is not available
+                if response.status_code == 404:
+                    print(f"[!] Article not found: {phrase} (URL: {url})")
+                    return None
+                
+                response.raise_for_status() # Raise error for 500s or connection issues
+                html_content = response.text
+
+            except requests.RequestException as e:
+                print(f"[!] Network error fetching {url}: {e}")
+                return None
+
+        # Parse HTML
+        return BeautifulSoup(html_content, 'html.parser')
+
+    def get_summary(self, phrase):
+        """
+        Finds the first paragraph of the article and returns clear text.
+        Skips menus/fixed elements, returns text without HTML tags.
+        """
+        soup = self._get_soup(phrase)
+        if not soup:
+            return None
+
+        # Logic for Terraria Wiki (wiki.gg)
+        # Main content is inside <div class="mw-parser-output">
+        content_div = soup.find('div', class_='mw-parser-output')
+        
+        if not content_div:
+            # Fallback for some other wiki structures if needed
+            content_div = soup.find('div', id='mw-content-text')
+
+        if not content_div:
+            print("[!] Could not locate article content div.")
+            return None
+
+        # Find the first paragraph
+        # recursive=False ensures we don't grab a paragraph inside a table/box
+        paragraphs = content_div.find_all('p', recursive=False)
+
+        for p in paragraphs:
+            # get_text() strips all tags (<b>, <a>, etc.)
+            text = p.get_text().strip()
+            
+            # Skip empty paragraphs or those that are just newlines
+            if len(text) > 1:
+                return text
+        
+        print("[!] No valid summary paragraph found.")
+        return None

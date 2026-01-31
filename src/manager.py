@@ -1,3 +1,5 @@
+from src.scraper import WikiScraper
+
 """
 Scraper Manager
 ============================
@@ -13,6 +15,8 @@ class ScraperManager:
     to the appropriate worker modules. Separates logic regarding *what* from *how*.
     """
 
+    BASE_URL = "https://terraria.wiki.gg/wiki/"
+
     def __init__(self, args):
         """
         :param args: Namespace object from argparse containing valid user inputs.
@@ -24,15 +28,43 @@ class ScraperManager:
         Main execution switch.
         Checks which command-line flag was active and executes the corresponding
         workflow.
-
-        Planned Logic:
-        --------------
-        1. Initialize the WikiScraper object (passing base URL/local file config).
-        2. If --summary: Call scraper.get_summary() -> Print result.
-        3. If --table: Call scraper.get_table() -> Pass to pandas -> Save CSV.
-        4. If --count-words: Call scraper.get_text() -> Count -> Update JSON.
-        5. If --auto-count-words: Initiate recursive scraping loop.
-        6. If --analyze...: Load JSON data -> Compare with Language Stats -> Plot.
         """
-        # Placeholder for the 'if/elif' dispatch logic
-        pass
+        # 1. Initialize the WikiScraper object
+        # We currently hardcode the URL, but the class is designed to accept
+        # a local file path later for the integration tests.
+        scraper = WikiScraper(self.BASE_URL)
+
+        # 2. Dispatch Logic
+
+        # --- BRANCH 1: SUMMARY ---
+        if self.args.summary:
+            print(f"[*] Fetching summary for: {self.args.summary}...")
+            
+            # Call the scraper 
+            result = scraper.get_summary(self.args.summary)
+            
+            if result:
+                # Output the text content
+                print("\n--- SUMMARY ---")
+                print(result)
+                print("---------------")
+            else:
+                print("[!] Failed to retrieve summary or article not found.")
+
+        # --- BRANCH 2: TABLE ---
+        elif self.args.table:
+            print("[*] Table extraction is not implemented yet.")
+            # To be implemented: scraper.get_table(...) -> analyzer.save_csv(...)
+
+        # --- BRANCH 3: WORD COUNT ---
+        elif self.args.count_words:
+             print("[*] Word counting is not implemented yet.")
+             # To be implemented: scraper.get_text(...) -> analyzer.update_counts(...)
+
+        # --- BRANCH 4: AUTO COUNT (RECURSIVE) ---
+        elif self.args.auto_count_words:
+            print("[*] Recursive scraping is not implemented yet.")
+
+        # --- BRANCH 5: ANALYSIS ---
+        elif self.args.analyze_relative_word_frequency:
+             print("[*] Analysis is not implemented yet.")
