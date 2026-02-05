@@ -27,6 +27,7 @@ class WikiArgumentParser:
             action: turns the argument into an on/off flag
             choices: limits user input to selected choices
         """
+
         # Primary Argument Group (User must select exactly one).
 
         action_group = self.parser.add_mutually_exclusive_group(required=True)
