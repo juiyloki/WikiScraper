@@ -10,7 +10,7 @@ Final grade project for the Python Course at MIMUW, winter semester 2025/2026.
 
 - wiki_scraper.py: Main entry point for the CLI tool.
 - src/: Source code modules (scraper, manager, data_analysis, argument).
-- Language_Analysis.ipynb: Jupyter Notebook for statistical analysis.
+- language_analysis.ipynb: Jupyter Notebook for statistical analysis.
 - unit_tests.py: Unit tests for isolated logic.
 - wiki_scraper_integration_test.py: End-to-end integration test.
 
@@ -41,8 +41,6 @@ Run these commands from the project root:
    python wiki_scraper.py --auto-count-words "Terraria" --depth 2 --wait 1.0
 
 ## Testing
-
-Ensure the 'src' folder contains an '__init__.py' file before running tests.
 
 - Run Unit Tests:
   python unit_tests.py
